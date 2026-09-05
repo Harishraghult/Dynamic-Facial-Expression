@@ -1,4 +1,4 @@
-# M3DFEL
+# M3DFEL 
 Official code for [Rethinking the Learning Paradigm for Dynamic Facial Expression Recognition](https://openaccess.thecvf.com/content/CVPR2023/papers/Wang_Rethinking_the_Learning_Paradigm_for_Dynamic_Facial_Expression_Recognition_CVPR_2023_paper.pdf) (accepted by CVPR2023). 
 
 We propose a weakly supervised approach to model Dynamic Facial Expression Recognition (DFER) as a Multi-Instance Learning (MIL) problem. 
