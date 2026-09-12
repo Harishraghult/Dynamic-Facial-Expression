@@ -86,23 +86,21 @@ class Options(object):
 
         # use the current time as the name of the directory
         now = datetime.datetime.now()
-        time_str = now.strftime("-[%m-%d]-[%H:%M]")
+        time_str = now.strftime("-[%m-%d]-[%H-%M]")
+
         args.name = args.dataset + time_str
-        args.output_path = "outputs/" + args.name + "/"
-        if not os.path.exists(args.output_path):
-            os.mkdir(args.output_path)
+        args.output_path = os.path.join("outputs", args.name)
+
+        os.makedirs(args.output_path, exist_ok=True)
 
         # init the csv file path of different datasets
         if args.dataset == "DFEW":
-            args.train_dataset = os.path.join(
-                args.root, "EmoLabel_DataSplit/train(single-labeled)/set_X.csv")
-            args.test_dataset = os.path.join(
-                args.root, "EmoLabel_DataSplit/test(single-labeled)/set_X.csv")
+            args.train_dataset = os.path.join(args.data_root, "EmoLabel_DataSplit", "train(single-labeled)", "set_X.csv")
+            args.test_dataset = os.path.join(args.data_root, "EmoLabel_DataSplit", "test(single-labeled)", "set_X.csv")
+
         elif args.dataset == "FERV39K":
-            args.train_dataset = os.path.join(
-                args.root, "FERV39K/FERV39k/4_setups/All_scenes/train_All.csv")
-            args.test_dataset = os.path.join(
-                args.root, "FERV39K/FERV39k/4_setups/All_scenes/test_All.csv")
+            args.train_dataset = os.path.join(args.root, "FERV39K/FERV39k/4_setups/All_scenes/train_All.csv")
+            args.test_dataset = os.path.join(args.root, "FERV39K/FERV39k/4_setups/All_scenes/test_All.csv")
             args.five_fold = False
 
         # set the fold

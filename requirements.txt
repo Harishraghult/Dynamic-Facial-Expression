@@ -1,7 +1,7 @@
 torch
 timm
 einops
-sklearn
+scikit-learn
 seaborn
 matplotlib
 numpy
