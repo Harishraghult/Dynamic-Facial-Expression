@@ -28,10 +28,10 @@ class Solver(object):
         self.best_ua = 0
 
         # init cuda
-        if len(self.args.gpu_ids) > 0:
+        if len(self.args.gpu_ids) > 0 and torch.cuda.is_available():
             torch.cuda.set_device(self.args.gpu_ids[0])
         self.device = torch.device(
-            'cuda:%d' % self.args.gpu_ids[0] if self.args.gpu_ids else 'cpu')
+            'cuda:%d' % self.args.gpu_ids[0] if self.args.gpu_ids and torch.cuda.is_available() else 'cpu')
 
         # set seed
         seed = self.args.seed
@@ -47,7 +47,8 @@ class Solver(object):
         self.model.to(self.device)
 
         # init dataloader
-        self.train_dataloader = create_dataloader(self.args, "train")
+        if self.args.mode != 'test':
+            self.train_dataloader = create_dataloader(self.args, "train")
         self.test_dataloader = create_dataloader(self.args, "test")
 
         # init criterion
@@ -55,25 +56,41 @@ class Solver(object):
             label_smoothing=self.args.label_smoothing).to(self.device)
 
         # init optimizer and scheduler
-        self.optimizer = torch.optim.AdamW(self.model.parameters(),
-                                           lr=self.args.lr,
-                                           eps=self.args.eps,
-                                           weight_decay=self.args.weight_decay)
-        self.scheduler = build_scheduler(
-            self.args, self.optimizer, len(self.train_dataloader))
+        if self.args.mode != 'test':
+            self.optimizer = torch.optim.AdamW(self.model.parameters(),
+                                               lr=self.args.lr,
+                                               eps=self.args.eps,
+                                               weight_decay=self.args.weight_decay)
+            self.scheduler = build_scheduler(
+                self.args, self.optimizer, len(self.train_dataloader))
 
         # resume
         if args.resume:
-            checkpoint = torch.load(args.resume, map_location='cuda:0',  weights_only=True)
+            checkpoint = torch.load(args.resume, map_location='cuda:0', weights_only=False)
             print("=> loaded checkpoint '{}' (epoch {})".format(
                 args.resume, checkpoint['epoch']))
             self.args.start_epoch = checkpoint['epoch'] + 1
             self.best_wa = checkpoint['best_wa']
             self.best_ua = checkpoint['best_ua']
             self.model.load_state_dict(checkpoint['state_dict'])
-            self.optimizer.load_state_dict(checkpoint['optimizer'])
+            if self.args.mode != 'test':
+                self.optimizer.load_state_dict(checkpoint['optimizer'])
 
     def run(self):
+        if self.args.mode == 'test':
+            print("Running in test mode...")
+            val_acc, val_loss = self.validate(0)
+            
+            # print test results
+            msg = "Test Result: WA:{:.2%}, \tUA:{:.2%}, \tloss:{:.4f}\n".format(
+                val_acc[0], val_acc[1], val_loss)
+            print(msg)
+            
+            # print confusion matrix
+            cm_msg = self.get_confusion_msg(val_acc[2])
+            print(cm_msg)
+            
+            return val_acc[0], val_acc[1]
 
         for epoch in range(self.args.start_epoch, self.args.epochs):
             inf = '********************' + str(epoch) + '********************'

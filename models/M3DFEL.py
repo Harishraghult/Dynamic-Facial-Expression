@@ -18,7 +18,7 @@ class M3DFEL(nn.Module):
 
         self.args = args
         self.device = torch.device(
-            'cuda:%d' % args.gpu_ids[0] if args.gpu_ids else 'cpu')
+            'cuda:%d' % args.gpu_ids[0] if args.gpu_ids and torch.cuda.is_available() else 'cpu')
         self.bag_size = self.args.num_frames // self.args.instance_length
         self.instance_length = self.args.instance_length
 
@@ -78,7 +78,7 @@ class M3DFEL(nn.Module):
                       t1=self.bag_size, t2=self.instance_length)
         # [batch*bag_size, 3, il, 112, 112]
 
-        x = self.features(x).squeeze()
+        x = self.features(x).squeeze(-1).squeeze(-1).squeeze(-1)  # only squeeze spatial/temporal dims, not batch
         # [batch*bag_size, 512]
         x = rearrange(x, '(b t) c -> b t c', t=self.bag_size)
 
@@ -86,7 +86,7 @@ class M3DFEL(nn.Module):
         x = self.MIL(x)
         # [batch, bag_size, 1024]
 
-        x = self.pwconv(x).squeeze()
+        x = self.pwconv(x).squeeze(1)  # only squeeze the conv channel dim
         # [batch, 1024]
         out = self.fc(x)
         # [batch, 7]

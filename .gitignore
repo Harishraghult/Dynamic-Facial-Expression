@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyTorch checkpoints and model weights
+*.pth
+*.pt
+outputs/
+
+# Dataset folders
+DFEW/
+data/
+*.zip
+*.tar.gz
+
+# Environment & IDE
+.venv/
+env/
+venv/
+.idea/
+.vscode/
+*.log

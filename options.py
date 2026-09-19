@@ -56,7 +56,7 @@ class Options(object):
         parser.add_argument('-o', '--optimizer',
                             default="AdamW", type=str, metavar='Opti')
         parser.add_argument('--lr', '--learning_rate',
-                            default=5e-4, type=float, metavar='LR', dest='lr')
+                            default=1e-4, type=float, metavar='LR', dest='lr')
         parser.add_argument('--momentum', default=0.9, type=float, metavar='M')
         parser.add_argument('--wd', '--weight_decay', default=0.05,
                             type=float, metavar='W', dest='weight_decay')
@@ -67,7 +67,7 @@ class Options(object):
         parser.add_argument('--lr_scheduler', default="cosine", type=str)
         parser.add_argument('--warmup_epochs', default=20, type=int)
         parser.add_argument('--min_lr', default=5e-6, type=float)
-        parser.add_argument('--warmup_lr', default=0, type=float)
+        parser.add_argument('--warmup_lr', default=5e-7, type=float)
 
         return parser
 
@@ -87,11 +87,12 @@ class Options(object):
         # use the current time as the name of the directory
         now = datetime.datetime.now()
         time_str = now.strftime("-[%m-%d]-[%H-%M]")
-
         args.name = args.dataset + time_str
         args.output_path = os.path.join("outputs", args.name)
 
         os.makedirs(args.output_path, exist_ok=True)
+
+        args.root = args.data_root
 
         # init the csv file path of different datasets
         if args.dataset == "DFEW":

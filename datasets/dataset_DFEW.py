@@ -84,6 +84,10 @@ class DFEWDataset(data.Dataset):
         Returns:
             transform
         """
+        # R3D-18 pretrained on Kinetics with these ImageNet-style stats
+        mean = [0.43216, 0.394666, 0.37645]
+        std  = [0.22803, 0.22145,  0.216989]
+
         transform = None
         if self.mode == "train":
             transform = torchvision.transforms.Compose([GroupRandomSizedCrop(self.image_size),
@@ -91,11 +95,13 @@ class DFEWDataset(data.Dataset):
                                                         GroupColorJitter(
                                                             self.args.color_jitter),
                                                         Stack(),
-                                                        ToTorchFormatTensor()])
+                                                        ToTorchFormatTensor(),
+                                                        GroupNormalize(mean, std)])
         elif self.mode == "test":
             transform = torchvision.transforms.Compose([GroupResize(self.image_size),
                                                         Stack(),
-                                                        ToTorchFormatTensor()])
+                                                        ToTorchFormatTensor(),
+                                                        GroupNormalize(mean, std)])
 
         return transform
 
@@ -108,10 +114,12 @@ class DFEWDataset(data.Dataset):
         full_num_frames = len(full_video_frames_paths)
 
         # when getting the frames, randomly choose the neighbour to augment
+        segment_stride = max(1, full_num_frames // self.num_frames)
         for i in range(self.num_frames):
             frame = int(full_num_frames * i / self.num_frames)
             if self.args.random_sample:
-                frame += int(random.random() * self.num_frames)
+                # offset is bounded within the segment to avoid sampling the same last frame
+                frame += random.randint(0, segment_stride - 1)
                 frame = min(full_num_frames - 1, frame)
             video_frames_paths.append(full_video_frames_paths[frame])
 

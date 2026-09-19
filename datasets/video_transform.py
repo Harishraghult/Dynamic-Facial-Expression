@@ -280,3 +280,28 @@ class ToTorchFormatTensor(object):
             # yikes, this transpose takes 80% of the loading time/CPU
             img = img.transpose(0, 1).transpose(0, 2).contiguous()
         return img.to(torch.float32).div(255) if self.div else img.to(torch.float32)
+
+
+class GroupNormalize(object):
+    """Normalize a stacked video tensor (C*T x H x W) with per-channel mean and std.
+
+    After Stack + ToTorchFormatTensor the tensor has shape [C*num_frames, H, W]
+    where channels are interleaved: [R0,G0,B0, R1,G1,B1, ...].
+    This applies the same mean/std to every frame's channels.
+
+    Args:
+        mean: per-channel means (length 3 for RGB)
+        std:  per-channel stds  (length 3 for RGB)
+    """
+
+    def __init__(self, mean, std):
+        self.mean = mean
+        self.std  = std
+
+    def __call__(self, tensor):
+        # tensor: [C*num_frames, H, W] — cycle through RGB channels
+        rep_mean = self.mean * (tensor.size(0) // len(self.mean))
+        rep_std  = self.std  * (tensor.size(0) // len(self.std))
+        for t, m, s in zip(tensor, rep_mean, rep_std):
+            t.sub_(m).div_(s)
+        return tensor
